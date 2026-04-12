@@ -2,43 +2,47 @@ import java.lang.reflect.Array;
 import java.time.LocalDate;
 
 public class Plant
+        implements Comparable<Plant>
 {
-
     private String name;
     private String notes;
     private LocalDate plantedDate;
     private LocalDate lastWateringDate;
     private int wateringFrequency;
 
-    public Plant(String _name, String _notes, LocalDate _plantedDate, LocalDate _lastWateringDate, int _wateringFrequency)
+    @Override
+    public int compareTo(Plant second)
     {
-        this.name = _name;
-        this.notes = _notes;
-        this.plantedDate = _plantedDate;
-        this.lastWateringDate = _lastWateringDate;
-        this.wateringFrequency = _wateringFrequency;
+        return this.getName().compareTo(second.getName());
     }
 
-    public Plant(String _name, int _wateringFrequency)
+    public Plant(String name, String notes, LocalDate plantedDate, LocalDate lastWateringDate, int wateringFrequency)
+            throws PlantException
     {
-        this.name = _name;
-        this.notes = "";
-        this.plantedDate = this.lastWateringDate = LocalDate.now();
-        this.wateringFrequency = _wateringFrequency;
+        this.name = name;
+        this.notes = notes;
+        this.plantedDate = plantedDate;
+        setLastWateringDate(lastWateringDate);
+        this.wateringFrequency = wateringFrequency;
+    }
+
+    public Plant(String name, int wateringFrequency)
+            throws PlantException
+    {
+        this(name, "", LocalDate.now(), LocalDate.now(), wateringFrequency);
     }
 
 
-    public Plant(String _name)
+    public Plant(String name)
+            throws PlantException
     {
-        this.name = _name;
-        this.notes = "";
-        this.plantedDate = this.lastWateringDate = LocalDate.now();
-        this.wateringFrequency = 7;
+        this(name, "", LocalDate.now(), LocalDate.now(), 7);
     }
 
-    public Object[] getWateringInfo()
+
+    public String getWateringInfo()
     {
-        return new Object[] {getName(), getLastWateringDate(), getNextRecommendedWateringDate()};
+        return getName() + "\nlast watering date: " + getLastWateringDate() + "next recommended watering date:" + getNextRecommendedWateringDate();
     }
 
     public void doWateringNow()
@@ -50,6 +54,18 @@ public class Plant
     {
         return getLastWateringDate().plusDays(getWateringFrequency());
     }
+
+    public boolean getRequireWatering()
+    {
+        // If next watering date (last watering + frequency) is before or today
+        if(getNextRecommendedWateringDate().isBefore(LocalDate.now().plusDays(1)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
 
 
     //region Getters and Setters
@@ -88,7 +104,13 @@ public class Plant
     }
 
     public void setLastWateringDate(LocalDate lastWateringDate)
+            throws PlantException
     {
+        if(lastWateringDate.isBefore(getPlantedDate()))
+        {
+            throw new PlantException("Last watering date cannot be before planted date\nEntered: " + lastWateringDate);
+        }
+
         this.lastWateringDate = lastWateringDate;
     }
 
@@ -98,7 +120,13 @@ public class Plant
     }
 
     public void setWateringFrequency(int wateringFrequency)
+            throws PlantException
     {
+        if(wateringFrequency < 1)
+        {
+                throw new PlantException("Watering frequency cannot be less than 1\nEntered: " + wateringFrequency);
+        }
+
         this.wateringFrequency = wateringFrequency;
     }
     //endregion
